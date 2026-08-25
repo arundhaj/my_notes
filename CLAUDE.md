@@ -4,12 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-A Notion-like note-taking app for a single user (personal/local use). `schema.sql` is the
-Postgres data model; `notes_api/` is a FastAPI app over it (SQLAlchemy models, an Alembic
-migration, and a session dependency — but only `/` and `/health` routes so far).
-`README.md` is empty.
+A Notion-like note-taking app for a single user (personal/local use), in two halves:
 
-## Commands
+- `schema.sql` + `notes_api/` — the Postgres data model and a FastAPI app over it
+  (SQLAlchemy models, an Alembic migration, and CRUD routers for every table).
+- `notes_web/` — a Vite + React + TypeScript frontend using Mantine, currently a single
+  Hello World page.
+
+The two are not wired together yet: the frontend makes no API calls, `vite.config.ts` has no
+proxy to the API, and the FastAPI app has no CORS middleware. All three are needed before the
+UI can read real data. `README.md` is empty.
+
+## Backend commands
 
 A virtualenv lives at `venv/` (Python 3.14) with the API dependencies already installed.
 
@@ -26,7 +32,28 @@ alembic -c notes_api/alembic.ini revision --autogenerate -m "message"
 
 `DATABASE_URL` (see `.env.example`, loaded from `.env`) configures both the app and Alembic;
 `migrations/env.py` imports it from `notes_api/database.py` rather than reading `alembic.ini`.
-There is no test suite or linter yet — pick one with the user rather than assuming.
+There is no Python test suite or linter yet — pick one with the user rather than assuming.
+
+## Frontend commands
+
+```bash
+cd notes_web
+npm run dev       # http://localhost:5173
+npm run build     # tsc -b && vite build
+npm run lint      # oxlint, shipped with the Vite template
+```
+
+Two things about the Mantine setup are load-bearing and easy to undo by accident:
+
+- `notes_web/postcss.config.cjs` — Mantine's stylesheet is authored against
+  `postcss-preset-mantine` mixins and `postcss-simple-vars` breakpoints. Without it components
+  render unstyled.
+- `import '@mantine/core/styles.css'` in `src/main.tsx`, before anything else, with `<App />`
+  wrapped in `<MantineProvider>`.
+
+The Vite boilerplate (`index.css`, `App.css`, `src/assets/`, `public/icons.svg`) was deleted
+rather than kept — the template's `index.css` flex-centers `body` and sets its own dark-mode
+colors, which fight Mantine's theme. Don't reintroduce it.
 
 ## Data model
 
