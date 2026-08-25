@@ -8,7 +8,7 @@ A Notion-like note-taking app for a single user (personal/local use), in two hal
 
 - `schema.sql` + `notes_api/` — the Postgres data model and a FastAPI app over it
   (SQLAlchemy models, an Alembic migration, and CRUD routers for every table).
-- `notes_web/` — a Vite + React + TypeScript frontend using Mantine, currently a single
+- `notes_web/` — a Vite + React + TypeScript frontend using MUI, currently a single
   Hello World page.
 
 The two are not wired together yet: the frontend makes no API calls, `vite.config.ts` has no
@@ -43,17 +43,18 @@ npm run build     # tsc -b && vite build
 npm run lint      # oxlint, shipped with the Vite template
 ```
 
-Two things about the Mantine setup are load-bearing and easy to undo by accident:
+The UI framework is **MUI** (Material UI v9) with the default Emotion styling engine. The app
+was scaffolded on Mantine and migrated on 2026-08-26; there is no PostCSS config any more, and
+nothing should reintroduce one.
 
-- `notes_web/postcss.config.cjs` — Mantine's stylesheet is authored against
-  `postcss-preset-mantine` mixins and `postcss-simple-vars` breakpoints. Without it components
-  render unstyled.
-- `import '@mantine/core/styles.css'` in `src/main.tsx`, before anything else, with `<App />`
-  wrapped in `<MantineProvider>`.
+`src/main.tsx` wraps `<App />` in `<ThemeProvider>` and renders `<CssBaseline />` — that pair is
+what applies the theme's typography and background, so keep both when editing the root. Roboto
+is self-hosted via `@fontsource/roboto` because MUI's default `fontFamily` asks for it; drop
+those four imports and text silently falls back to Helvetica/Arial.
 
 The Vite boilerplate (`index.css`, `App.css`, `src/assets/`, `public/icons.svg`) was deleted
 rather than kept — the template's `index.css` flex-centers `body` and sets its own dark-mode
-colors, which fight Mantine's theme. Don't reintroduce it.
+colors, which fight the MUI theme. Don't reintroduce it.
 
 ## Data model
 

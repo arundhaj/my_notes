@@ -1,12 +1,14 @@
-import { Container, Text, Title } from '@mantine/core'
+import { Container, Typography } from '@mui/material'
 
 function App() {
   return (
-    <Container size="sm" pt="xl">
-      <Title order={1}>Hello World</Title>
-      <Text c="dimmed" mt="sm">
-        notes_web is running on React and Mantine.
-      </Text>
+    <Container maxWidth="sm" sx={{ pt: 6 }}>
+      <Typography variant="h3" component="h1">
+        Hello World!!!
+      </Typography>
+      <Typography color="text.secondary" sx={{ mt: 1 }}>
+        notes_web is running on React and MUI.
+      </Typography>
     </Container>
   )
 }
