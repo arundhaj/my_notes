@@ -1,0 +1,7 @@
+# Real credentials; notes_api/.env.example is the tracked template.
+.env
+
+__pycache__/
+*.py[cod]
+venv/
+.venv/
