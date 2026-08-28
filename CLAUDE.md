@@ -8,12 +8,14 @@ A Notion-like note-taking app for a single user (personal/local use), in two hal
 
 - `schema.sql` + `notes_api/` — the Postgres data model and a FastAPI app over it
   (SQLAlchemy models, an Alembic migration, and CRUD routers for every table).
-- `notes_web/` — a Vite + React + TypeScript frontend using MUI, currently a single
-  Hello World page.
+- `notes_web/` — a Vite + React + TypeScript frontend using MUI: a two-panel shell whose
+  left panel lists root pages from the API.
 
-The two are not wired together yet: the frontend makes no API calls, `vite.config.ts` has no
-proxy to the API, and the FastAPI app has no CORS middleware. All three are needed before the
-UI can read real data. `README.md` is empty.
+The frontend talks to the API through a dev proxy: `vite.config.ts` maps `/api` to
+`http://127.0.0.1:8000` and strips the prefix, so the browser stays on one origin and
+`notes_api` needs **no CORS middleware**. Run both servers together during development. A
+production deployment serves the built assets from somewhere else and will need its own
+answer — either the same reverse-proxy arrangement or CORS. `README.md` is empty.
 
 ## Backend commands
 
@@ -40,7 +42,6 @@ There is no Python test suite or linter yet — pick one with the user rather th
 cd notes_web
 npm run dev       # http://localhost:5173
 npm run build     # tsc -b && vite build
-npm run lint      # oxlint, shipped with the Vite template
 ```
 
 The UI framework is **MUI** (Material UI v9) with the default Emotion styling engine. The app
@@ -48,13 +49,30 @@ was scaffolded on Mantine and migrated on 2026-08-26; there is no PostCSS config
 nothing should reintroduce one.
 
 `src/main.tsx` wraps `<App />` in `<ThemeProvider>` and renders `<CssBaseline />` — that pair is
-what applies the theme's typography and background, so keep both when editing the root. Roboto
-is self-hosted via `@fontsource/roboto` because MUI's default `fontFamily` asks for it; drop
-those four imports and text silently falls back to Helvetica/Arial.
+what applies the theme's typography and background, so keep both when editing the root. 
 
 The Vite boilerplate (`index.css`, `App.css`, `src/assets/`, `public/icons.svg`) was deleted
 rather than kept — the template's `index.css` flex-centers `body` and sets its own dark-mode
 colors, which fight the MUI theme. Don't reintroduce it.
+
+### Layout
+
+`src/App.tsx` is the app shell: a fixed top bar over a flex row holding a collapsible left
+panel and the main content, each scrolling independently. Three rules keep that working —
+the shell is `height: 100dvh` with `overflow: hidden`, the flex row carries `minHeight: 0`
+(without it the row grows past the viewport and the page scrolls as a whole instead of the
+panels), and each panel sets its own `overflowY: auto`.
+
+Below the `md` breakpoint the left panel becomes a temporary `Drawer` overlay; at `md` and up
+it animates between `LEFT_PANEL_WIDTH` and `0`. `LeftPanel` fixes its own inner width so the
+content does not reflow mid-animation.
+
+`src/api/` wraps fetch: `client.ts` unwraps FastAPI's `detail` field into thrown `Error`s,
+`pages.ts` holds the calls, `types.ts` mirrors the Pydantic response schemas by hand — they
+are not generated, so keep them in step with `notes_api/schemas/`.
+
+**Root pages are fetched with `GET /pages?root_only=true`, not `parent_id=null`** —
+`parent_id` is typed as a UUID, so the literal string `null` fails validation with a 422.
 
 ## Data model
 
