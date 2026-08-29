@@ -35,6 +35,14 @@ export function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
   return request<T>('GET', path, { signal })
 }
 
+export function postJson<T>(
+  path: string,
+  body: unknown,
+  signal?: AbortSignal,
+): Promise<T> {
+  return request<T>('POST', path, { body, signal })
+}
+
 export function patchJson<T>(
   path: string,
   body: unknown,
