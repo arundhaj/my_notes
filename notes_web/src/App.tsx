@@ -10,7 +10,6 @@ import {
   useTheme,
 } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
-import type { Page } from './api/types'
 import LeftPanel, { LEFT_PANEL_WIDTH } from './components/LeftPanel'
 import RightPanel from './components/RightPanel'
 
@@ -20,12 +19,14 @@ function App() {
   const isNarrow = useMediaQuery(theme.breakpoints.down('md'))
 
   const [panelOpen, setPanelOpen] = useState(true)
-  // What the right panel shows: whichever page was last clicked in the tree.
-  const [selectedPage, setSelectedPage] = useState<Page | null>(null)
+  // Which page the right panel shows. Just an id -- the page data itself
+  // comes from the shared PageStoreProvider, so the tree and the right panel
+  // are always reading the same object for a given id.
+  const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
 
   const handleSelectPage = useCallback(
-    (page: Page) => {
-      setSelectedPage(page)
+    (pageId: string) => {
+      setSelectedPageId(pageId)
       // On a narrow screen the panel covers the content, so get out of the way.
       if (isNarrow) setPanelOpen(false)
     },
@@ -102,9 +103,18 @@ function App() {
 
         <Box
           component="main"
-          sx={{ flex: 1, minWidth: 0, minHeight: 0, overflowY: 'auto' }}
+          // overflowX must be stated explicitly: CSS coerces a `visible`
+          // axis to `auto` when the other axis is not visible, which would
+          // otherwise leave this panel horizontally scrollable by accident.
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            minHeight: 0,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+          }}
         >
-          <RightPanel page={selectedPage} />
+          <RightPanel pageId={selectedPageId} />
         </Box>
       </Box>
     </Box>

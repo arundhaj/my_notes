@@ -10,42 +10,52 @@ import {
 import AddIcon from '@mui/icons-material/Add'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { listChildPages } from '../api/pages'
-import type { Page } from '../api/types'
+import { usePageStore } from '../state/pageStore'
 import PageIcon from './PageIcon'
 
 interface PageTreeItemProps {
-  page: Page
+  pageId: string
   depth: number
-  onSelectPage: (page: Page) => void
+  onSelectPage: (pageId: string) => void
 }
 
 /**
  * One row of the tree, and its own expand/collapse state.
  *
+ * The page itself is read from the shared PageStoreProvider by id, not
+ * passed down as a prop -- so if it's being edited elsewhere (e.g. its
+ * title, in the right panel), this row re-renders with the same change,
+ * with no signal needing to be threaded down to find it.
+ *
  * Children are fetched lazily -- only when the chevron button is clicked --
- * and then cached in state for the row's lifetime, so collapsing and
- * re-expanding does not refetch. The chevron and "Add" buttons stop click
- * propagation so their own clicks don't also select the row's page.
+ * and then their ids are cached in state for the row's lifetime, so
+ * collapsing and re-expanding does not refetch. The chevron and "Add"
+ * buttons stop click propagation so their own clicks don't also select the
+ * row's page.
  */
 export default function PageTreeItem({
-  page,
+  pageId,
   depth,
   onSelectPage,
 }: PageTreeItemProps) {
+  const { pages, upsertPages } = usePageStore()
+  const page = pages[pageId]
+
   const [expanded, setExpanded] = useState(false)
-  const [children, setChildren] = useState<Page[] | null>(null)
+  const [childIds, setChildIds] = useState<string[] | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!expanded || children !== null) return
+    if (!expanded || childIds !== null) return
     const controller = new AbortController()
     setLoading(true)
     setError(null)
 
-    listChildPages(page.id, controller.signal)
+    listChildPages(pageId, controller.signal)
       .then((kids) => {
-        setChildren(kids)
+        upsertPages(kids)
+        setChildIds(kids.map((kid) => kid.id))
         setLoading(false)
       })
       .catch((err: unknown) => {
@@ -55,7 +65,12 @@ export default function PageTreeItem({
       })
 
     return () => controller.abort()
-  }, [expanded, children, page.id])
+  }, [expanded, childIds, pageId, upsertPages])
+
+  // The store hasn't been populated for this id yet -- shouldn't normally
+  // happen, since an id only ever reaches this component alongside its page
+  // being upserted in the same batch, but render nothing rather than crash.
+  if (!page) return null
 
   const indent = 1 + depth * 1.5
 
@@ -69,7 +84,7 @@ export default function PageTreeItem({
       <ListItemButton
         component="div"
         dense
-        onClick={() => onSelectPage(page)}
+        onClick={() => onSelectPage(page.id)}
         sx={{
           pl: indent,
           // Reveal the add button only while this row is hovered or focused.
@@ -136,7 +151,7 @@ export default function PageTreeItem({
             {error}
           </Typography>
         )}
-        {children?.length === 0 && (
+        {childIds?.length === 0 && (
           <Typography
             variant="caption"
             color="text.secondary"
@@ -145,12 +160,12 @@ export default function PageTreeItem({
             No pages
           </Typography>
         )}
-        {children && children.length > 0 && (
+        {childIds && childIds.length > 0 && (
           <List dense disablePadding>
-            {children.map((child) => (
+            {childIds.map((id) => (
               <PageTreeItem
-                key={child.id}
-                page={child}
+                key={id}
+                pageId={id}
                 depth={depth + 1}
                 onSelectPage={onSelectPage}
               />

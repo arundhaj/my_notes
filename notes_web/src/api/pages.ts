@@ -1,4 +1,4 @@
-import { getJson } from './client'
+import { getJson, patchJson } from './client'
 import type { Page } from './types'
 
 /**
@@ -17,4 +17,13 @@ export function listChildPages(
   signal?: AbortSignal,
 ): Promise<Page[]> {
   return getJson<Page[]>(`/pages?parent_id=${encodeURIComponent(parentId)}`, signal)
+}
+
+/** Partial update -- only the fields passed in `changes` are touched. */
+export function updatePage(
+  pageId: string,
+  changes: Partial<Pick<Page, 'title'>>,
+  signal?: AbortSignal,
+): Promise<Page> {
+  return patchJson<Page>(`/pages/${encodeURIComponent(pageId)}`, changes, signal)
 }
