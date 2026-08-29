@@ -24,7 +24,7 @@ export default function RightPanel({ page }: RightPanelProps) {
     return (
       <Box sx={{ p: 4 }}>
         <Typography color="text.secondary">
-          Select a space from the left panel.
+          Select a page from the left panel.
         </Typography>
       </Box>
     )

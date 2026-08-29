@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
 import {
   AppBar,
   Box,
@@ -9,28 +9,10 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material'
-import { listSpaces } from './api/pages'
+import MenuIcon from '@mui/icons-material/Menu'
 import type { Page } from './api/types'
 import LeftPanel, { LEFT_PANEL_WIDTH } from './components/LeftPanel'
 import RightPanel from './components/RightPanel'
-
-/** Hamburger, inline so the app needs no icon dependency. */
-function MenuGlyph() {
-  return (
-    <Box
-      component="svg"
-      viewBox="0 0 24 24"
-      sx={{ width: 20, height: 20 }}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      aria-hidden="true"
-    >
-      <path d="M4 7h16M4 12h16M4 17h16" />
-    </Box>
-  )
-}
 
 function App() {
   const theme = useTheme()
@@ -38,61 +20,19 @@ function App() {
   const isNarrow = useMediaQuery(theme.breakpoints.down('md'))
 
   const [panelOpen, setPanelOpen] = useState(true)
-  const [spaces, setSpaces] = useState<Page[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [reloadToken, setReloadToken] = useState(0)
+  // What the right panel shows: whichever page was last clicked in the tree.
+  const [selectedPage, setSelectedPage] = useState<Page | null>(null)
 
-  useEffect(() => {
-    const controller = new AbortController()
-
-    listSpaces(controller.signal)
-      .then((pages) => {
-        setSpaces(pages)
-        setLoading(false)
-      })
-      .catch((err: unknown) => {
-        if (controller.signal.aborted) return
-        setError(err instanceof Error ? err.message : String(err))
-        setLoading(false)
-      })
-
-    return () => controller.abort()
-  }, [reloadToken])
-
-  const selectedPage = useMemo(
-    () => spaces.find((page) => page.id === selectedId) ?? null,
-    [spaces, selectedId],
-  )
-
-  // Reset the request state here rather than inside the effect, so the effect
-  // only ever sets state from the settled promise.
-  const handleRetry = useCallback(() => {
-    setLoading(true)
-    setError(null)
-    setReloadToken((token) => token + 1)
-  }, [])
-
-  const handleSelect = useCallback(
-    (id: string | null) => {
-      setSelectedId(id)
+  const handleSelectPage = useCallback(
+    (page: Page) => {
+      setSelectedPage(page)
       // On a narrow screen the panel covers the content, so get out of the way.
       if (isNarrow) setPanelOpen(false)
     },
     [isNarrow],
   )
 
-  const panel = (
-    <LeftPanel
-      pages={spaces}
-      loading={loading}
-      error={error}
-      selectedId={selectedId}
-      onSelect={handleSelect}
-      onRetry={handleRetry}
-    />
-  )
+  const panel = <LeftPanel onSelectPage={handleSelectPage} />
 
   return (
     // 100dvh rather than 100vh so mobile browser chrome does not push the
@@ -119,7 +59,7 @@ function App() {
             aria-expanded={panelOpen}
             sx={{ mr: 1 }}
           >
-            <MenuGlyph />
+            <MenuIcon fontSize="small" />
           </IconButton>
           <Typography variant="subtitle1" component="h1" noWrap>
             
