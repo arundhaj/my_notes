@@ -53,7 +53,7 @@ export default function LeftPanel({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <CircularProgress size={18} />
             <Typography variant="body2" color="text.secondary">
-              Loading root pages…
+              Loading spaces…
             </Typography>
           </Box>
         )}
@@ -73,11 +73,11 @@ export default function LeftPanel({
 
         {!loading && !error && (
           <FormControl fullWidth size="small" disabled={pages.length === 0}>
-            <InputLabel id="root-page-label">Root page</InputLabel>
+            <InputLabel id="space-label">Space</InputLabel>
             <Select
-              labelId="root-page-label"
-              id="root-page-select"
-              label="Root page"
+              labelId="space-label"
+              id="space-select"
+              label="Space"
               value={selectedId ?? ''}
               onChange={handleChange}
               displayEmpty={pages.length === 0}
@@ -94,7 +94,7 @@ export default function LeftPanel({
 
         {!loading && !error && pages.length === 0 && (
           <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-            No root pages yet. Create one with <code>POST /pages</code>.
+            No spaces yet. Create one with <code>POST /pages</code>.
           </Typography>
         )}
       </Box>

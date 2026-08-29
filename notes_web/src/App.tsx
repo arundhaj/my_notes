@@ -9,7 +9,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material'
-import { listRootPages } from './api/pages'
+import { listSpaces } from './api/pages'
 import type { Page } from './api/types'
 import LeftPanel, { LEFT_PANEL_WIDTH } from './components/LeftPanel'
 import RightPanel from './components/RightPanel'
@@ -38,7 +38,7 @@ function App() {
   const isNarrow = useMediaQuery(theme.breakpoints.down('md'))
 
   const [panelOpen, setPanelOpen] = useState(true)
-  const [rootPages, setRootPages] = useState<Page[]>([])
+  const [spaces, setSpaces] = useState<Page[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -47,9 +47,9 @@ function App() {
   useEffect(() => {
     const controller = new AbortController()
 
-    listRootPages(controller.signal)
+    listSpaces(controller.signal)
       .then((pages) => {
-        setRootPages(pages)
+        setSpaces(pages)
         setLoading(false)
       })
       .catch((err: unknown) => {
@@ -62,8 +62,8 @@ function App() {
   }, [reloadToken])
 
   const selectedPage = useMemo(
-    () => rootPages.find((page) => page.id === selectedId) ?? null,
-    [rootPages, selectedId],
+    () => spaces.find((page) => page.id === selectedId) ?? null,
+    [spaces, selectedId],
   )
 
   // Reset the request state here rather than inside the effect, so the effect
@@ -85,7 +85,7 @@ function App() {
 
   const panel = (
     <LeftPanel
-      pages={rootPages}
+      pages={spaces}
       loading={loading}
       error={error}
       selectedId={selectedId}
